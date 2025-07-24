@@ -18,31 +18,33 @@ class _AuthScreenState extends State<AuthScreen> {
   var _enteredEmail = '';
   var _enteredPassword = '';
 
+  void _submit() async {
+    final isValid = _form.currentState!.validate();
+    if (!isValid) {
+      return;
+    }
+    _form.currentState!.save();
+    try {
+      if (_isLogin) {
+        final userCredentials = await _firebase.signInWithEmailAndPassword(email: _enteredEmail, password: _enteredPassword);
+        print(userCredentials);
+      } else {
+        final userCredentials = await _firebase.createUserWithEmailAndPassword(
+          email: _enteredEmail,
+          password: _enteredPassword,
+        );
+      }
+    } on FirebaseAuthException catch (error) {
+      if (error.code == 'email-already-in-use') {}
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.message ?? 'Authentication failed.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    void _submit() async {
-      final isValid = _form.currentState!.validate();
-      if (!isValid) {
-        return;
-      }
-      _form.currentState!.save();
-      if (_isLogin) {
-      } else {
-        try {
-          final userCredentials = _firebase.createUserWithEmailAndPassword(
-            email: _enteredEmail,
-            password: _enteredPassword,
-          );
-        } on FirebaseAuthException catch (error) {
-          if (error.code == 'email-already-in-use') {}
-          ScaffoldMessenger.of(context).clearSnackBars();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(error.message ?? 'Authentication failed.')),
-          );
-        }
-      }
-    }
-
     return Scaffold(
       appBar: AppBar(
         title: Text(
