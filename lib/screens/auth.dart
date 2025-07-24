@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
+final _firebase = FirebaseAuth.instance;
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -15,16 +18,30 @@ class _AuthScreenState extends State<AuthScreen> {
   var _enteredEmail = '';
   var _enteredPassword = '';
 
-
   @override
   Widget build(BuildContext context) {
-    void _submit() {
+    void _submit() async {
       final isValid = _form.currentState!.validate();
-      if (isValid) {
-        _form.currentState!.save();
+      if (!isValid) {
+        return;
+      }
+      _form.currentState!.save();
+      if (_isLogin) {
+      } else {
+        try {
+          final userCredentials = _firebase.createUserWithEmailAndPassword(
+            email: _enteredEmail,
+            password: _enteredPassword,
+          );
+        } on FirebaseAuthException catch (error) {
+          if (error.code == 'email-already-in-use') {}
+          ScaffoldMessenger.of(context).clearSnackBars();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(error.message ?? 'Authentication failed.')),
+          );
+        }
       }
     }
-
 
     return Scaffold(
       appBar: AppBar(
@@ -46,7 +63,9 @@ class _AuthScreenState extends State<AuthScreen> {
                 right: 20,
               ),
               width: 200,
-              child: Image.asset('/home/karan/AndroidStudioProjects/flutter_chat/lib/chat.png'),
+              child: Image.asset(
+                '/home/karan/AndroidStudioProjects/flutter_chat/lib/chat.png',
+              ),
             ),
             Card(
               margin: const EdgeInsets.all(20),
@@ -88,9 +107,9 @@ class _AuthScreenState extends State<AuthScreen> {
                             }
                             return null;
                           },
-                            onSaved: (value) {
-                              _enteredPassword = value!;
-                            }
+                          onSaved: (value) {
+                            _enteredPassword = value!;
+                          },
                         ),
                         const SizedBox(height: 12),
                         ElevatedButton(
